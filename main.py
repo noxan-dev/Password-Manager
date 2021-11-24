@@ -29,7 +29,7 @@ def generate_password():
 
 # ---------------------------- SAVE PASSWORD ------------------------------- #
 def save():
-    website = website_input.get()
+    website = website_input.get().capitalize()
     password = password_input.get()
     email = email_input.get()
     new_data = {
@@ -58,7 +58,7 @@ def save():
 
 
 def find_password():
-    user_entry = website_input.get()
+    user_entry = website_input.get().capitalize()
     try:
         with open('data.json', 'r') as data:
             read_data = json.load(data)
