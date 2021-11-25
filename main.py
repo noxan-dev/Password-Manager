@@ -108,7 +108,6 @@ email_label.grid(column=0, row=2)
 # Email Input
 email_input = Entry(width=35)
 email_input.grid(column=1, row=2, columnspan=2, sticky='EW')
-email_input.insert(0, 'chaimmalek@gmail.com')
 
 # Password Label
 password_label = Label(text='Password:')
