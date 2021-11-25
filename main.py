@@ -36,6 +36,7 @@ def save():
         website: {
             'email': email,
             'password': password,
+            'website': website
         }
     }
     if len(website) == 0 or len(website) == 0 or len(password) == 0:
@@ -91,6 +92,31 @@ canvas = Canvas(width=200, height=200)
 image = PhotoImage(file='logo.png')
 canvas.create_image(100, 100, image=image)
 canvas.grid(column=1, row=0)
+
+
+# Website listing
+def listbox_used(event):
+    website_input.delete(0, END)
+    password_input.delete(0, END)
+    email_input.delete(0, END)
+    with open('data.json', 'r') as data_file:
+        read_data = json.load(data_file)
+        email = read_data[text_box.get(text_box.curselection())]["email"]
+        password = read_data[text_box.get(text_box.curselection())]["password"]
+        website = read_data[text_box.get(text_box.curselection())]["website"]
+
+        website_input.insert(0, website)
+        password_input.insert(0, password)
+        email_input.insert(0, email)
+
+
+with open('data.json', 'r') as data:
+    read_data = json.load(data)
+    text_box = Listbox(height=len(read_data))
+    for website in read_data:
+        text_box.insert(END, website)
+    text_box.grid(column=1, row=5, pady=10)
+    text_box.bind("<<ListboxSelect>>", listbox_used)
 
 # Website Label
 website_label = Label(text='Website:')
