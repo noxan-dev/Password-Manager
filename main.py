@@ -1,5 +1,6 @@
 from tkinter import *
 from tkinter import messagebox
+from tkinter import ttk
 from random import randint, choice, shuffle
 import pyperclip
 import json
@@ -39,7 +40,7 @@ def save():
             'website': website
         }
     }
-    if len(website) == 0 or len(website) == 0 or len(password) == 0:
+    if len(website) == 0 or len(email) == 0 or len(password) == 0:
         messagebox.showinfo(title='Oops', message='Please input to all the fields.')
     else:
         try:
@@ -56,6 +57,8 @@ def save():
         finally:
             website_input.delete(0, END)
             password_input.delete(0, END)
+    # update the combobox
+    update()
 
 
 def find_password():
@@ -73,13 +76,29 @@ def find_password():
             password = read_data[user_entry]["password"]
             messagebox.showinfo(title=user_entry, message=f'Email: {email}\nPassword: {password}')
         else:
-            messagebox.showinfo(title='No Website', message=f'No details for {user_entry} exists. Please add a website.')
+            messagebox.showinfo(title='No Website', message=f'No details for {user_entry} exists. '
+                                                            f'Please add a website.')
 
 
-# ---------------------------- UI SETUP ------------------------------- #
+# ---------------------------- UI SETUP/New Tab ------------------------------- #
 window = Tk()
 window.title('Password Generator')
-window.config(padx=50, pady=50)
+
+
+notebook = ttk.Notebook(window, padding=10)
+notebook.grid(column=0, row=0)
+
+# create frames
+new_tab = ttk.Frame(notebook, width=450, height=330)
+existing_tab = ttk.Frame(notebook, width=450, height=330)
+
+new_tab.grid(column=0, row=0)
+existing_tab.grid(column=0, row=0)
+
+# add frames to notebook
+notebook.add(new_tab, text='New')
+notebook.add(existing_tab, text='Existing')
+
 
 # Style/theme
 # style = Style()
@@ -88,68 +107,107 @@ window.config(padx=50, pady=50)
 
 
 # Image
-canvas = Canvas(width=200, height=200)
+canvas = Canvas(new_tab, width=200, height=200)
 image = PhotoImage(file='logo.png')
-canvas.create_image(100, 100, image=image)
+canvas_image = canvas.create_image(100, 100, image=image)
 canvas.grid(column=1, row=0)
 
 
+# Website Label
+website_label = Label(new_tab, text='Website:')
+website_label.grid(column=0, row=1)
+
+# Website Input
+website_input = Entry(new_tab, width=21)
+website_input.grid(column=1, row=1, sticky='EW')
+website_input.focus()
+
+# Email Label
+email_label = Label(new_tab, text='Email/Username:')
+email_label.grid(column=0, row=2)
+
+# Email Input
+email_input = Entry(new_tab, width=35)
+email_input.grid(column=1, row=2, columnspan=2, sticky='EW')
+
+# Password Label
+password_label = Label(new_tab, text='Password:')
+password_label.grid(column=0, row=3)
+
+# Password Input
+password_input = Entry(new_tab, width=21)
+password_input.grid(column=1, row=3, sticky='EW')
+
+generate_button = Button(new_tab, text='Generate Password', width=15, command=generate_password)
+generate_button.grid(column=2, row=3)
+
+add_button = Button(new_tab, text='Add', width=36, command=save)
+add_button.grid(column=1, row=4, columnspan=2, sticky='EW')
+
+search_button = Button(new_tab, text='Search', width=15, command=find_password)
+search_button.grid(column=2, row=1)
+
+
+# ---------------------------- UI SETUP/Existing Tab ------------------------------- #
 # Website listing
-def listbox_used(event):
+
+def combobox_used(event):
     website_input.delete(0, END)
     password_input.delete(0, END)
     email_input.delete(0, END)
     with open('data.json', 'r') as data_file:
         read_data = json.load(data_file)
-        email = read_data[text_box.get(text_box.curselection())]["email"]
-        password = read_data[text_box.get(text_box.curselection())]["password"]
-        website = read_data[text_box.get(text_box.curselection())]["website"]
+        email = read_data[combobox.get()]["email"]
+        password = read_data[combobox.get()]["password"]
+        website = read_data[combobox.get()]["website"]
 
-        website_input.insert(0, website)
-        password_input.insert(0, password)
-        email_input.insert(0, email)
+        # website_input.insert(0, website)
+        # password_input.insert(0, password)
+        # email_input.insert(0, email)
+        show_website.config(text=website)
+        show_email.config(text=email)
+        show_password.config(text=password)
+
+
+select_label = Label(existing_tab, text='Select an entry to view, edit, or delete')
+select_label.grid(column=0, row=0, columnspan=4)
+
+
+def update():
+    with open('data.json', 'r') as data_file:
+        read_data = json.load(data_file)
+    website_list = [website for website in read_data]
+    combobox['values'] = website_list
 
 
 with open('data.json', 'r') as data:
     read_data = json.load(data)
-    text_box = Listbox(height=len(read_data))
-    for website in read_data:
-        text_box.insert(END, website)
-    text_box.grid(column=1, row=5, pady=10)
-    text_box.bind("<<ListboxSelect>>", listbox_used)
+    combobox = ttk.Combobox(existing_tab, text='Choose the website', width=30, justify='center')
+    website_list = [website for website in read_data]
+    combobox['values'] = website_list
+    combobox.bind('<<ComboboxSelected>>', combobox_used)
+    combobox.grid(column=0, row=1, columnspan=4, pady=10)
 
-# Website Label
-website_label = Label(text='Website:')
-website_label.grid(column=0, row=1)
 
-# Website Input
-website_input = Entry(width=21)
-website_input.grid(column=1, row=1, sticky='EW')
-website_input.focus()
+existing_website_label = Label(existing_tab, text='Website:')
+existing_website_label.grid(column=0, row=2, pady=2, padx=15)
+show_website = Label(existing_tab, text='Website')
+show_website.grid(column=1, row=2, pady=2)
+open_button = Button(existing_tab, text='Open')
+open_button.grid(column=2, row=2, pady=2, padx=25)
 
-# Email Label
-email_label = Label(text='Email/Username:')
-email_label.grid(column=0, row=2)
+existing_email_label = Label(existing_tab, text='Email/Username:')
+existing_email_label.grid(column=0, row=3, pady=2, padx=15)
+show_email = Label(existing_tab, text='Email')
+show_email.grid(column=1, row=3, pady=2)
+email_copy = Button(existing_tab, text='Copy')
+email_copy.grid(column=2, row=3, pady=2, padx=25)
 
-# Email Input
-email_input = Entry(width=35)
-email_input.grid(column=1, row=2, columnspan=2, sticky='EW')
-
-# Password Label
-password_label = Label(text='Password:')
-password_label.grid(column=0, row=3)
-
-# Password Input
-password_input = Entry(width=21)
-password_input.grid(column=1, row=3, sticky='EW')
-
-generate_button = Button(text='Generate Password', width=15, command=generate_password)
-generate_button.grid(column=2, row=3)
-
-add_button = Button(text='Add', width=36, command=save)
-add_button.grid(column=1, row=4, columnspan=2, sticky='EW')
-
-search_button = Button(text='Search', width=15, command=find_password)
-search_button.grid(column=2, row=1)
+existing_password_label = Label(existing_tab, text='Password:')
+existing_password_label.grid(column=0, row=4, pady=2, padx=15)
+show_password = Label(existing_tab, text='Password')
+show_password.grid(column=1, row=4, pady=2)
+password_copy = Button(existing_tab, text='Copy')
+password_copy.grid(column=2, row=4, pady=2, padx=25)
 
 window.mainloop()
