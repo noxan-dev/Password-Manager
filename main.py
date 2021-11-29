@@ -4,6 +4,9 @@ from tkinter import ttk
 from random import randint, choice, shuffle
 import pyperclip
 import json
+import webbrowser
+
+
 # from tkinter.ttk import *
 
 
@@ -31,21 +34,22 @@ def generate_password():
 # ---------------------------- SAVE PASSWORD ------------------------------- #
 def save():
     website = website_input.get().capitalize()
+    dict_website = website_input.get().capitalize().replace(' ', '')
     password = password_input.get()
     email = email_input.get()
     new_data = {
         website: {
             'email': email,
             'password': password,
-            'website': website
+            'website': dict_website
         }
     }
     if len(website) == 0 or len(email) == 0 or len(password) == 0:
         messagebox.showinfo(title='Oops', message='Please input to all the fields.')
     else:
         try:
-            with open('data.json', 'r') as data:
-                update_data = json.load(data)
+            with open('data.json', 'r') as data_file:
+                update_data = json.load(data_file)
         except (FileNotFoundError, ValueError):
             with open('data.json', 'w') as data:
                 json.dump(new_data, data, indent=4)
@@ -65,15 +69,15 @@ def find_password():
     user_entry = website_input.get().capitalize()
     try:
         with open('data.json', 'r') as data:
-            read_data = json.load(data)
+            find_data = json.load(data)
     except FileNotFoundError:
         messagebox.showinfo(title='No File', message='No Data File Found.')
     else:
         if len(user_entry) == 0:
             messagebox.showinfo(title='Oops', message='Please input to all the fields.')
-        elif user_entry in read_data:
-            email = read_data[user_entry]["email"]
-            password = read_data[user_entry]["password"]
+        elif user_entry in find_data:
+            email = find_data[user_entry]["email"]
+            password = find_data[user_entry]["password"]
             messagebox.showinfo(title=user_entry, message=f'Email: {email}\nPassword: {password}')
         else:
             messagebox.showinfo(title='No Website', message=f'No details for {user_entry} exists. '
@@ -83,7 +87,6 @@ def find_password():
 # ---------------------------- UI SETUP/New Tab ------------------------------- #
 window = Tk()
 window.title('Password Generator')
-
 
 notebook = ttk.Notebook(window, padding=10)
 notebook.grid(column=0, row=0)
@@ -99,7 +102,6 @@ existing_tab.grid(column=0, row=0)
 notebook.add(new_tab, text='New')
 notebook.add(existing_tab, text='Existing')
 
-
 # Style/theme
 # style = Style()
 # style.tk.call('source', 'sun-valley.tcl')
@@ -111,7 +113,6 @@ canvas = Canvas(new_tab, width=200, height=200)
 image = PhotoImage(file='logo.png')
 canvas_image = canvas.create_image(100, 100, image=image)
 canvas.grid(column=1, row=0)
-
 
 # Website Label
 website_label = Label(new_tab, text='Website:')
@@ -135,7 +136,7 @@ password_label = Label(new_tab, text='Password:')
 password_label.grid(column=0, row=3)
 
 # Password Input
-password_input = Entry(new_tab, width=21)
+password_input = Entry(new_tab, show='*', width=21)
 password_input.grid(column=1, row=3, sticky='EW')
 
 generate_button = Button(new_tab, text='Generate Password', width=15, command=generate_password)
@@ -156,10 +157,10 @@ def combobox_used(event):
     password_input.delete(0, END)
     email_input.delete(0, END)
     with open('data.json', 'r') as data_file:
-        read_data = json.load(data_file)
-        email = read_data[combobox.get()]["email"]
-        password = read_data[combobox.get()]["password"]
-        website = read_data[combobox.get()]["website"]
+        combobox_data = json.load(data_file)
+        email = combobox_data[combobox.get()]["email"]
+        password = combobox_data[combobox.get()]["password"]
+        website = combobox_data[combobox.get()]["website"]
 
         # website_input.insert(0, website)
         # password_input.insert(0, password)
@@ -169,16 +170,23 @@ def combobox_used(event):
         show_password.config(text=password)
 
 
-select_label = Label(existing_tab, text='Select an entry to view, edit, or delete')
-select_label.grid(column=0, row=0, columnspan=4)
-
-
 def update():
     with open('data.json', 'r') as data_file:
-        read_data = json.load(data_file)
-    website_list = [website for website in read_data]
-    combobox['values'] = website_list
+        updated_data = json.load(data_file)
+    update_website_list = [website for website in updated_data]
+    combobox['values'] = update_website_list
 
+
+def open_website():
+    website = show_website['text']
+    if show_website['text'] == 'Website':
+        pass
+    elif show_website != 'website':
+        webbrowser.open(f'https://{website}.com')
+
+
+select_label = Label(existing_tab, text='Select an entry to view, edit, or delete')
+select_label.grid(column=0, row=0, columnspan=3)
 
 with open('data.json', 'r') as data:
     read_data = json.load(data)
@@ -186,28 +194,27 @@ with open('data.json', 'r') as data:
     website_list = [website for website in read_data]
     combobox['values'] = website_list
     combobox.bind('<<ComboboxSelected>>', combobox_used)
-    combobox.grid(column=0, row=1, columnspan=4, pady=10)
-
+    combobox.grid(column=0, row=1, columnspan=3, pady=10)
 
 existing_website_label = Label(existing_tab, text='Website:')
 existing_website_label.grid(column=0, row=2, pady=2, padx=15)
 show_website = Label(existing_tab, text='Website')
 show_website.grid(column=1, row=2, pady=2)
-open_button = Button(existing_tab, text='Open')
+open_button = Button(existing_tab, text='Open', command=open_website)
 open_button.grid(column=2, row=2, pady=2, padx=25)
 
 existing_email_label = Label(existing_tab, text='Email/Username:')
 existing_email_label.grid(column=0, row=3, pady=2, padx=15)
 show_email = Label(existing_tab, text='Email')
 show_email.grid(column=1, row=3, pady=2)
-email_copy = Button(existing_tab, text='Copy')
+email_copy = Button(existing_tab, text='Copy', command=lambda: pyperclip.copy(show_email['text']))
 email_copy.grid(column=2, row=3, pady=2, padx=25)
 
 existing_password_label = Label(existing_tab, text='Password:')
 existing_password_label.grid(column=0, row=4, pady=2, padx=15)
 show_password = Label(existing_tab, text='Password')
 show_password.grid(column=1, row=4, pady=2)
-password_copy = Button(existing_tab, text='Copy')
+password_copy = Button(existing_tab, text='Copy', command=lambda: pyperclip.copy(show_password['text']))
 password_copy.grid(column=2, row=4, pady=2, padx=25)
 
 window.mainloop()
